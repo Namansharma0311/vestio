@@ -15,17 +15,8 @@ export default function Register() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-    hapticTap("medium");
-    try {
-      await register(email, password);
-      navigate("/");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    setError("Registration is disabled — this app has a single account");
+    return;
   }
 
   return (

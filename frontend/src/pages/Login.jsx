@@ -207,14 +207,7 @@ export default function Login() {
 
             {/* Sign Up Link */}
             <p className="text-center text-sm text-white/50 font-body">
-              Don't have an account?{" "}
-              <a
-                href="/register"
-                className="font-600 transition-colors"
-                style={{ color: "#90EE90" }}
-              >
-                Create one
-              </a>
+              Single private account — no signups
             </p>
           </div>
         </div>
