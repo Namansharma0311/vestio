@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">VESTIO</string>
+    <string name="title_activity_main">VESTIO</string>
+    <string name="package_name">com.closetkeeper.app</string>
+    <string name="custom_url_scheme">com.closetkeeper.app</string>
+</resources>

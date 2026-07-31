@@ -1,0 +1,25 @@
+{
+  "appId": "com.closetkeeper.app",
+  "appName": "VESTIO",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "http"
+  },
+  "plugins": {
+    "StatusBar": {
+      "style": "LIGHT",
+      "backgroundColor": "#00000000",
+      "overlaysWebView": true
+    },
+    "SplashScreen": {
+      "launchAutoHide": false,
+      "launchShowDuration": 0,
+      "backgroundColor": "#1a1a2e",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
+    },
+    "Camera": {
+      "permissions": ["camera", "photos"]
+    }
+  }
+}
