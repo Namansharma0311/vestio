@@ -14,7 +14,7 @@ export default function Outfits() {
   useEffect(() => {
     (async () => {
       const [c, o] = await Promise.all([api.listClothes(), api.listOutfits()]);
-      setClothes(c);
+      setClothes(c.items || c);
       setOutfits(o);
       setLoading(false);
     })();
