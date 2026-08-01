@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../api/client.js";
 import ClothingCard from "../components/ClothingCard.jsx";
+import OutfitIdeas from "../components/OutfitIdeas.jsx";
 import { hapticTap } from "../hooks/useHaptics.js";
 
 export default function Outfits() {
@@ -91,6 +92,7 @@ export default function Outfits() {
               ))}
             </div>
           )}
+          <OutfitIdeas clothes={clothes} onUseLook={(ids) => setSelected(ids)} />
         </div>
       )}
 
