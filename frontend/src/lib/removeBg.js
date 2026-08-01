@@ -52,16 +52,17 @@ async function prepare(file, maxDim = 1024) {
   const scale = Math.min(1, maxDim / Math.max(bmp.width, bmp.height));
   try {
     if (scale >= 1) {
-      return bmp;
+      bmp.close && bmp.close();
+      return file;
     }
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(bmp.width * scale));
     canvas.height = Math.max(1, Math.round(bmp.height * scale));
     canvas.getContext("2d").drawImage(bmp, 0, 0, canvas.width, canvas.height);
     bmp.close && bmp.close();
-    return await createImageBitmap(canvas);
+    return canvasToBlob(canvas, "image/jpeg", 0.9);
   } catch (e) {
-    return bmp;
+    return file;
   }
 }
 
