@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core';
 
 const CLOTHES_KEY = 'ck_clothes';
 const OUTFITS_KEY = 'ck_outfits';
+const MUSIC_KEY = 'ck_music';
 const SYNC_INTERVAL = 30000;
 
 function readLocalStorage(key) {
@@ -16,6 +17,25 @@ function readLocalStorage(key) {
 
 function stripImages(items) {
   return items.map(({ image, ...rest }) => rest);
+}
+
+function buildMusic(raw) {
+  const out = [];
+  const data = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  for (const region of ['us', 'in']) {
+    const list = Array.isArray(data[region]) ? data[region].slice(0, 25) : [];
+    list.forEach((t, i) => {
+      if (!t) return;
+      out.push({
+        track: t.track || '',
+        artist: t.artist || '',
+        genre: t.genre || '',
+        region: (region === 'us' ? 'US' : 'IN'),
+        rank: i + 1,
+      });
+    });
+  }
+  return out;
 }
 
 function hexToArgb(hex) {
@@ -54,11 +74,13 @@ export function useWidgetSync() {
     try {
       const clothes = readLocalStorage(CLOTHES_KEY);
       const outfits = readLocalStorage(OUTFITS_KEY);
+      const music = buildMusic(readLocalStorage(MUSIC_KEY));
       const themeId = localStorage.getItem('ck_theme') || 'default';
       const t = THEMES_RAW[themeId] || THEMES_RAW.default;
       await Capacitor.Plugins.WidgetSync.syncData({
         clothes: JSON.stringify(stripImages(clothes)),
         outfits: JSON.stringify(outfits),
+        music: JSON.stringify(music),
         canvasColor: hexToArgb(t.canvas),
         surfaceColor: hexToArgb(t.surface),
         inkColor: hexToArgb(t.ink),
@@ -74,10 +96,10 @@ export function useWidgetSync() {
     const id = setInterval(sync, SYNC_INTERVAL);
 
     const onStorage = (e) => {
-      if (e.key === CLOTHES_KEY || e.key === OUTFITS_KEY) sync();
+      if (e.key === CLOTHES_KEY || e.key === OUTFITS_KEY || e.key === MUSIC_KEY) sync();
     };
     const onDataChange = (e) => {
-      if (e.detail?.key === CLOTHES_KEY || e.detail?.key === OUTFITS_KEY) sync();
+      if (e.detail?.key === CLOTHES_KEY || e.detail?.key === OUTFITS_KEY || e.detail?.key === MUSIC_KEY) sync();
     };
     window.addEventListener('storage', onStorage);
     window.addEventListener('ck-data-change', onDataChange);

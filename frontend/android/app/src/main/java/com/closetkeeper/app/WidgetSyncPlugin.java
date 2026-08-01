@@ -18,6 +18,7 @@ public class WidgetSyncPlugin extends Plugin {
         try {
             String clothes = call.getString("clothes", "[]");
             String outfits = call.getString("outfits", "[]");
+            String music = call.getString("music", "[]");
             long canvas = getColor(call, "canvasColor", 0xfffaf7f1L);
             long surface = getColor(call, "surfaceColor", 0xffffffffL);
             long ink = getColor(call, "inkColor", 0xff21201dL);
@@ -29,6 +30,7 @@ public class WidgetSyncPlugin extends Plugin {
             prefs.edit()
                     .putString("clothes", clothes)
                     .putString("outfits", outfits)
+                    .putString("music", music)
                     .putLong("canvasColor", canvas)
                     .putLong("surfaceColor", surface)
                     .putLong("inkColor", ink)
@@ -38,6 +40,9 @@ public class WidgetSyncPlugin extends Plugin {
                     .apply();
 
             ClosetWidgetProvider.updateAllWidgets(getContext());
+            OutfitSliderWidgetProvider.updateAllWidgets(getContext());
+            MusicSliderWidgetProvider.updateAllWidgets(getContext());
+            OutfitsWidgetProvider.updateAllWidgets(getContext());
             call.resolve();
         } catch (Exception e) {
             call.reject("Widget sync failed: " + e.getMessage(), e);

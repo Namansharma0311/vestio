@@ -465,6 +465,7 @@ function TrendingCarousel({ onTrackSelect, userCategories }) {
         if (!cancelled) {
           setTrending({ us: data.us || [], in: data.in || [] });
           setLoading(false);
+          try { localStorage.setItem("ck_music", JSON.stringify({ us: data.us || [], in: data.in || [] })); } catch {}
         }
       } catch {
         if (!cancelled) setLoading(false);
