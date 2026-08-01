@@ -4,4 +4,5 @@
     <string name="title_activity_main">VESTIO</string>
     <string name="package_name">com.closetkeeper.app</string>
     <string name="custom_url_scheme">com.closetkeeper.app</string>
+    <string name="widget_description">Shows your closet items and outfit count</string>
 </resources>

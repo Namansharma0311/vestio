@@ -30,9 +30,9 @@ export default function PageTransition({ children }) {
     <div
       style={{
         opacity: ready ? 1 : 0,
-        transform: ready ? "translateY(0)" : "translateY(6px)",
+        transform: ready ? "none" : "translateY(6px)",
         transition: `opacity ${FADE_IN}ms cubic-bezier(0.25, 0.1, 0.25, 1), transform ${FADE_IN}ms cubic-bezier(0.25, 0.1, 0.25, 1)`,
-        willChange: "opacity, transform",
+        willChange: ready ? "auto" : "opacity, transform",
       }}
     >
       {children}

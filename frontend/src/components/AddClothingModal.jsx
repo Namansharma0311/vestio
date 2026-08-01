@@ -3,6 +3,7 @@ import { CATEGORIES, SEASONS, OCCASIONS } from "../constants.js";
 import { api } from "../api/client.js";
 import { isCapacitor } from "../config.js";
 import { hapticTap } from "../hooks/useHaptics.js";
+import { extractClothing } from "../lib/removeBg.js";
 
 const initial = { name: "", category: "", color: "", brand: "", season: "", occasion: "" };
 
@@ -25,26 +26,71 @@ async function pickImage() {
 export default function AddClothingModal({ onClose, onCreated }) {
   const [fields, setFields] = useState(initial);
   const [file, setFile] = useState(null);
+  const [processedFile, setProcessedFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState("download");
+  const [removeBg, setRemoveBg] = useState(true);
+  const [removeSkin, setRemoveSkin] = useState(true);
+  const [bgNote, setBgNote] = useState(null);
+
+  async function processPhoto(f) {
+    setFile(f);
+    setProcessedFile(null);
+    setPreview(URL.createObjectURL(f));
+    if (!removeBg) return;
+    setProcessing(true);
+    setProgress(0);
+    setPhase("download");
+    setBgNote(null);
+    try {
+      const blob = await extractClothing(f, {
+        removeSkin,
+        onPhase: (p) => setPhase(p),
+        onProgress: (p) => {
+          setProgress((prev) => (p >= prev ? p : prev));
+        },
+      });
+      const processed = new File([blob], `${(f.name || "photo").replace(/\.[^.]+$/, "")}.jpg`, {
+        type: "image/jpeg",
+      });
+      setProcessedFile(processed);
+      setPreview(URL.createObjectURL(blob));
+    } catch (err) {
+      console.error(err);
+      setProcessedFile(null);
+      setBgNote("Background removal couldn't run (check your connection) — using the original photo.");
+    } finally {
+      setProcessing(false);
+    }
+  }
 
   function handleFile(e) {
     const f = e.target.files?.[0];
-    setFile(f || null);
-    setPreview(f ? URL.createObjectURL(f) : null);
+    if (!f) return;
+    processPhoto(f);
   }
 
   async function handleCamera() {
     try {
       const f = await pickImage();
-      if (f) {
-        setFile(f);
-        setPreview(URL.createObjectURL(f));
-      }
+      if (f) processPhoto(f);
     } catch (err) {
       setError(err.message);
     }
+  }
+
+  function toggleRemoveBg(v) {
+    setRemoveBg(v);
+    if (file) processPhoto(file);
+  }
+
+  function toggleRemoveSkin(v) {
+    setRemoveSkin(v);
+    if (file && removeBg) processPhoto(file);
   }
 
   async function handleSubmit(e) {
@@ -59,7 +105,8 @@ export default function AddClothingModal({ onClose, onCreated }) {
     try {
       const formData = new FormData();
       Object.entries(fields).forEach(([k, v]) => formData.append(k, v));
-      if (file) formData.append("image", file);
+      const image = processedFile || file;
+      if (image) formData.append("image", image);
       const item = await api.createClothing(formData);
       onCreated(item);
     } catch (err) {
@@ -87,22 +134,61 @@ export default function AddClothingModal({ onClose, onCreated }) {
           <div>
             <label className="text-xs uppercase tracking-wide text-ink/60 font-display font-600">Photo</label>
             <div className="mt-1 flex items-center gap-3">
-              <div className="w-20 h-20 bg-canvas border border-line rounded-tag overflow-hidden flex items-center justify-center text-ink/30 text-xs">
+              <div className="relative w-20 h-20 bg-white border border-line rounded-tag overflow-hidden flex items-center justify-center text-ink/30 text-xs">
                 {preview ? <img src={preview} alt="" className="w-full h-full object-cover" /> : "None"}
-              </div>
+                {processing && (
+                  <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-1">
+                    <div className="w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin" />
+                    <span className="text-[9px] text-white font-display font-700">{Math.round(progress * 100)}%</span>
+                  </div>
+                )}              </div>
               <div className="flex flex-col gap-2">
                 {isCapacitor() ? (
                   <button
                     type="button"
                     onClick={handleCamera}
-                    className="text-sm bg-ink text-canvas px-3 py-1.5 rounded-tag font-display uppercase"
+                    disabled={processing}
+                    className="text-sm bg-ink text-canvas px-3 py-1.5 rounded-tag font-display uppercase disabled:opacity-50"
                   >
                     Take photo
                   </button>
                 ) : (
                   <input type="file" accept="image/*" onChange={handleFile} className="text-sm" />
                 )}
+                {bgNote && <span className="text-[11px] text-clay max-w-[180px]">{bgNote}</span>}
               </div>
+            </div>
+
+            <div className="mt-3 flex flex-col gap-2">
+              <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={removeBg}
+                  onChange={(e) => toggleRemoveBg(e.target.checked)}
+                  className="accent-moss w-4 h-4"
+                />
+                <span className="font-display font-600 uppercase tracking-wide text-xs">Auto-cut out (remove background)</span>
+              </label>
+              {removeBg && (
+                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={removeSkin}
+                    onChange={(e) => toggleRemoveSkin(e.target.checked)}
+                    className="accent-moss w-4 h-4"
+                  />
+                  <span className="font-display font-600 uppercase tracking-wide text-xs">Remove face, hands &amp; skin</span>
+                </label>
+              )}
+              {removeBg && (
+                <p className="text-[11px] text-muted">
+                  {processing
+                    ? phase === "download"
+                      ? "Downloading the AI model… (first time only, ~40 MB)"
+                      : "Cutting out your outfit…"
+                    : "Clothes are kept on a clean white background. You can re-run it any time by picking the photo again."}
+                </p>
+              )}
             </div>
           </div>
 
@@ -181,10 +267,10 @@ export default function AddClothingModal({ onClose, onCreated }) {
 
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || processing}
             className="w-full bg-moss hover:bg-mossdark text-white font-display font-700 uppercase tracking-wide py-2.5 rounded-tag disabled:opacity-60"
           >
-            {saving ? "Saving…" : "Add to closet"}
+            {saving ? "Saving…" : processing ? "Cutting out…" : "Add to closet"}
           </button>
         </form>
       </div>

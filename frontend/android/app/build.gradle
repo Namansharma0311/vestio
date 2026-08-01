@@ -16,10 +16,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            def creds = new Properties()
+            def credsFile = file('keystore-credentials.txt')
+            if (credsFile.exists()) creds.load(new FileInputStream(credsFile))
+            storeFile file('vestio-release.keystore')
+            storePassword creds.getProperty("PASSWORD", "")
+            keyAlias "vestio"
+            keyPassword creds.getProperty("PASSWORD", "")
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }
